@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Short URL Service</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h1 class="text-center mb-4">🔗 Shorten URLs Fast</h1>
+                
+                <!-- Form -->
+                <div class="card mb-4 shadow">
+                    <div class="card-body">
+                        <form id="shortenForm">
+                            <div class="mb-3">
+                                <label for="longUrl" class="form-label">Long URL</label>
+                                <input type="url" class="form-control" id="longUrl" placeholder="https://example.com" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Generate Short URL</button>
+                        </form>
+                        <div id="result" class="mt-3 d-none alert alert-success">
+                            <strong>Short URL:</strong> <span id="shortUrl"></span>
+                            <div id="qrCode" class="text-center mt-3"></div>
+                            <div class="mt-2">
+                                <button class="btn btn-outline-secondary me-2" onclick="copyLink()">📋 Copy</button>
+                                <a id="visitBtn" class="btn btn-success" target="_blank">🔗 Visit</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Recent Links (<%= urls.length %>)</h5>
+                    </div>
+                    <div class="list-group list-group-flush" id="history">
+                        <% urls.forEach(url => { %>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="<%= baseUrl %>/<%= url.shortId %>" target="_blank"><%= baseUrl %>/<%= url.shortId %></a>
+                                    <br><small>→ <%= url.redirectUrl %> | <%= url.visitHistory?.length || 0 %> visits</small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="copyUrl('<%= baseUrl %>/<%= url.shortId %>')">Copy</button>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = '<%= baseUrl %>';
+        const STATS_URL = '<%= statsUrl %>';
+
+        // Shorten
+        document.getElementById('shortenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const longUrl = document.getElementById('longUrl').value;
+            try {
+                const res = await fetch(`${BASE_URL}/url/shorten`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: longUrl })
+                });
+                const data = await res.json();
+                const shortUrl = `${BASE_URL}/${data.id}`;
+                document.getElementById('shortUrl').innerHTML = `<a href="${shortUrl}" target="_blank">${shortUrl}</a>`;
+                document.getElementById('visitBtn').href = shortUrl;
+                document.getElementById('result').classList.remove('d-none');
+                QRCode.toCanvas(document.getElementById('qrCode'), shortUrl, { width: 150 });
+                loadHistory();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        // Copy functions
+        function copyLink() {
+            navigator.clipboard.writeText(document.getElementById('shortUrl').textContent);
+            alert('Copied!');
+        }
+        function copyUrl(url) {
+            navigator.clipboard.writeText(url);
+            alert('Copied!');
+        }
+
+        // Refresh history
+        async function loadHistory() {
+            try {
+                const res = await fetch(STATS_URL);
+                const urls = await res.json();
+                const historyEl = document.getElementById('history');
+                historyEl.innerHTML = urls.map(url => `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="${BASE_URL}/${url.shortId}" target="_blank">${BASE_URL}/${url.shortId}</a>
+                            <br><small>→ ${url.redirectUrl} | ${url.visitHistory?.length || 0} visits</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="copyUrl('${BASE_URL}/${url.shortId}')">Copy</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch {}
+        }
+    </script>
+</body>
+</html>

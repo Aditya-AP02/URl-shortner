@@ -1,0 +1,16 @@
+1.firstlly we create a file and in that we make run commands like "npm init" in terminal also installing mongoose and express in terminal commands "npm i express" , "npm i mongoose"
+
+2.creating files like modules for data modules, controllers for middlewaree, and rotures for urls 
+
+3. createa normal index.js file in main file ans require need such as const express = require(" wxpress"), and create an express app , const app = express(), also creating a port , PORT = 8001, for that we make a listaen method , app.listen(PORT, ()=>console.log('port is running, and server i started..' ))
+
+4 . now in module  file we need to create an model , const mongoose = require(mongoose")
+then create a schema, const userSchema = new mongoose.schema({
+  //insert requiews fieldsin it 
+})
+
+5. after creting model in file named url.js in modes file write userSchema and pass all that schema into a const variable, const URL = mongoose.model("url", userSchema)
+then export ou whole url schema to main indec.js file ,module.export = URL
+
+6.now crate a router in router file make file named url.js 
+in that import express and make routers , const routes = express.Routes()

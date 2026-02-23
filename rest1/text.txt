@@ -1,0 +1,2 @@
+Schema - whhere we define structure of data
+by using schems we use create a MODEL to perform CRUD operation 
